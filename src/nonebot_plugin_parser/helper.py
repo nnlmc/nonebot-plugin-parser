@@ -15,6 +15,7 @@ from nonebot_plugin_alconna.uniseg import (
     Reference,
     CustomNode,
     UniMessage,
+    SupportAdapter,
 )
 
 from .config import pconfig
