@@ -21,17 +21,14 @@ class DefaultRenderer(BaseRenderer):
             texts.extend((self.result.display_url, self.result.repost_display_url))
 
         texts = [text for text in texts if text]
-        total_len = sum(len(text) for text in texts)
         texts[:-1] = [text + "\n" for text in texts[:-1]]
         segs: list[Segment] = [Text(text) for text in texts]
 
         if self.result.video and (cover := self.result.video.cover) and (cover_path := await cover.safe_get()):
             segs.insert(1, UniHelper.img_seg(cover_path))
 
-        if total_len > 300:
-            yield UniMessage(UniHelper.construct_forward_message(segs))
-        else:
-            yield UniMessage(segs)
+        # Disable merged forwards for long text.
+        yield UniMessage(segs)
 
         async for message in self.render_contents():
             yield message

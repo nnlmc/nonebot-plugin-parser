@@ -78,13 +78,16 @@ class BaseRenderer(ABC):
                 mergeable_segs.append(img_seg)
 
         if mergeable_segs or other_segs:
-            if pconfig.need_forward_contents or len(other_segs) > 1 or (len(mergeable_segs) + len(other_segs)) > 4:
-                forward_msg = UniHelper.construct_forward_message(mergeable_segs + other_segs)
-                yield UniMessage(forward_msg)
-            else:
-                if mergeable_segs:
-                    yield UniMessage(mergeable_segs)
-                for other_seg in other_segs:
+            # Disable merged forwards and send multiple media items one by one.
+            for seg in mergeable_segs:
+                if isinstance(seg, UniMessage):
+                    yield seg
+                else:
+                    yield UniMessage(seg)
+            for other_seg in other_segs:
+                if isinstance(other_seg, UniMessage):
+                    yield other_seg
+                else:
                     yield UniMessage(other_seg)
 
         if failed_count > 0:

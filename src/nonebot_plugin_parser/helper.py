@@ -3,10 +3,8 @@ from pathlib import Path
 from functools import wraps
 from collections.abc import Callable, Sequence, Awaitable
 
-from nonebot import logger
-from nonebot.matcher import current_bot, current_event
+from nonebot.matcher import current_bot
 from nonebot.adapters import Event
-from nonebot_plugin_alconna import SupportAdapter, uniseg
 from nonebot_plugin_alconna.uniseg import (
     File,
     Text,
@@ -131,36 +129,15 @@ class UniHelper:
         event: Event,
         status: Literal["fail", "resolving", "done"],
     ) -> None:
-        """发送消息回应"""
-        message_id = uniseg.get_message_id(event)
-        target = uniseg.get_target(event)
-
-        emoji = EMOJI_MAP[status][0 if target.adapter in ID_ADAPTERS else 1]
-
-        try:
-            await uniseg.message_reaction(emoji, message_id=message_id)
-        except Exception:
-            logger.opt(exception=True).warning(f"reaction {emoji} to {message_id} failed, maybe not support")
+        """Disable message reactions for QQ official bot compatibility."""
+        return None
 
     @classmethod
     def with_reaction(cls, func: Callable[..., Awaitable[Any]]):
-        """自动回应装饰器"""
+        """Run parser without sending automatic message reactions."""
 
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            event = current_event.get()
-            await cls.message_reaction(event, "resolving")
-
-            try:
-                result = await func(*args, **kwargs)
-            # except TipException as e:
-            #     await UniMessage.text(e.message).send()
-            #     raise
-            except Exception:
-                await cls.message_reaction(event, "fail")
-                raise
-
-            await cls.message_reaction(event, "done")
-            return result
+            return await func(*args, **kwargs)
 
         return wrapper
